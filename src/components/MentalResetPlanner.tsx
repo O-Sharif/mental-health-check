@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { supabase, type MentalResetEntry } from "@/lib/supabase";
 
 interface MoodState {
   calm: boolean;
@@ -70,6 +71,44 @@ const MentalResetPlanner = () => {
 
   const getSelectedActivitiesCount = () => {
     return Object.values(activities).filter(Boolean).length;
+  };
+
+  const handleSave = async () => {
+    const selectedMood = Object.entries(mood).find(([_, selected]) => selected)?.[0] || '';
+    const selectedActivities = Object.entries(activities)
+      .filter(([_, selected]) => selected)
+      .map(([activity, _]) => activity);
+    
+    const entry: MentalResetEntry = {
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+      mood: selectedMood,
+      activities: selectedActivities,
+      custom_activity: customActivity || undefined,
+      control_answer: controlAnswer || undefined,
+      not_my_job_answer: notMyJobAnswer || undefined,
+      five_days_answer: fiveDaysAnswer || undefined,
+      next_step: nextStep || undefined,
+    };
+
+    try {
+      const { error } = await supabase
+        .from('mental_reset_entries')
+        .insert([entry]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved Successfully",
+        description: `Your mental reset session for ${new Date().toLocaleDateString()} has been saved.`,
+      });
+    } catch (error) {
+      console.error('Error saving entry:', error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your session. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleReset = () => {
@@ -257,8 +296,11 @@ const MentalResetPlanner = () => {
               </div>
             </div>
 
-            {/* Reset Button */}
-            <div className="text-center pt-4">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4 pt-4">
+              <Button onClick={handleSave} className="px-8">
+                Save Session
+              </Button>
               <Button onClick={handleReset} variant="outline" className="px-8">
                 Reset Planner
               </Button>
