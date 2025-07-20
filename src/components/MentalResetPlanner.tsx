@@ -74,6 +74,15 @@ const MentalResetPlanner = () => {
   };
 
   const handleSave = async () => {
+    if (!supabase) {
+      toast({
+        title: "Supabase Not Connected",
+        description: "Please ensure Supabase is properly connected by clicking the green Supabase button in the top right.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const selectedMood = Object.entries(mood).find(([_, selected]) => selected)?.[0] || '';
     const selectedActivities = Object.entries(activities)
       .filter(([_, selected]) => selected)
