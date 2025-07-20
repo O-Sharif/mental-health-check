@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      mental_reset_entries: {
+        Row: {
+          activities: string[]
+          control_answer: string | null
+          created_at: string
+          custom_activity: string | null
+          date: string
+          five_days_answer: string | null
+          id: string
+          mood: string
+          next_step: string | null
+          not_my_job_answer: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activities: string[]
+          control_answer?: string | null
+          created_at?: string
+          custom_activity?: string | null
+          date: string
+          five_days_answer?: string | null
+          id?: string
+          mood: string
+          next_step?: string | null
+          not_my_job_answer?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activities?: string[]
+          control_answer?: string | null
+          created_at?: string
+          custom_activity?: string | null
+          date?: string
+          five_days_answer?: string | null
+          id?: string
+          mood?: string
+          next_step?: string | null
+          not_my_job_answer?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

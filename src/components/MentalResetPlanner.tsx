@@ -4,7 +4,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, type MentalResetEntry } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+
+type MentalResetEntry = {
+  user_id: string;
+  date: string;
+  mood: string;
+  activities: string[];
+  custom_activity?: string;
+  control_answer?: string;
+  not_my_job_answer?: string;
+  five_days_answer?: string;
+  next_step?: string;
+};
 
 interface MoodState {
   calm: boolean;
@@ -74,10 +86,13 @@ const MentalResetPlanner = () => {
   };
 
   const handleSave = async () => {
-    if (!supabase) {
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session?.user) {
       toast({
-        title: "Supabase Not Connected",
-        description: "Please ensure Supabase is properly connected by clicking the green Supabase button in the top right.",
+        title: "Authentication Required",
+        description: "You need to be logged in to save sessions. Please sign up or log in first.",
         variant: "destructive",
       });
       return;
@@ -89,6 +104,7 @@ const MentalResetPlanner = () => {
       .map(([activity, _]) => activity);
     
     const entry: MentalResetEntry = {
+      user_id: session.user.id,
       date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
       mood: selectedMood,
       activities: selectedActivities,
