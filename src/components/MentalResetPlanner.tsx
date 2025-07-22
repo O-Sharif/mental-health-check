@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { User, LogOut, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +41,8 @@ interface ResetActivities {
 
 const MentalResetPlanner = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
   const [mood, setMood] = useState<MoodState>({
     calm: false,
     irritated: false,
@@ -64,6 +68,25 @@ const MentalResetPlanner = () => {
   const [fiveDaysAnswer, setFiveDaysAnswer] = useState("");
   const [nextStep, setNextStep] = useState("");
 
+  useEffect(() => {
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handleMoodChange = (moodType: keyof MoodState) => {
     setMood(prev => ({
       calm: false,
@@ -85,16 +108,22 @@ const MentalResetPlanner = () => {
     return Object.values(activities).filter(Boolean).length;
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+  };
+
   const handleSave = async () => {
-    // Check if user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session?.user) {
+    if (!user) {
       toast({
         title: "Authentication Required",
         description: "You need to be logged in to save sessions. Please sign up or log in first.",
         variant: "destructive",
       });
+      navigate("/auth");
       return;
     }
 
@@ -104,7 +133,7 @@ const MentalResetPlanner = () => {
       .map(([activity, _]) => activity);
     
     const entry: MentalResetEntry = {
-      user_id: session.user.id,
+      user_id: user.id,
       date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
       mood: selectedMood,
       activities: selectedActivities,
@@ -176,6 +205,48 @@ const MentalResetPlanner = () => {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header with Auth */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                <span className="text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => navigate("/auth")}
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                Sign In
+              </Button>
+            )}
+          </div>
+          {user && (
+            <Button
+              variant="outline"
+              onClick={() => navigate("/saved-sessions")}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View Saved Sessions
+            </Button>
+          )}
+        </div>
+        
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl md:text-4xl font-light text-focus tracking-wide uppercase">
