@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Activity, MessageCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Activity, MessageCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -65,6 +65,35 @@ const SavedSessions = () => {
     }
   };
 
+  const deleteSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from("mental_reset_entries")
+        .delete()
+        .eq("id", sessionId);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Failed to delete session.",
+          variant: "destructive",
+        });
+      } else {
+        setSessions(sessions.filter(session => session.id !== sessionId));
+        toast({
+          title: "Success",
+          description: "Session deleted successfully.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
@@ -118,9 +147,19 @@ const SavedSessions = () => {
                       <Calendar className="h-5 w-5" />
                       {formatDate(session.date)}
                     </CardTitle>
-                    <Badge variant="secondary" className="text-sm">
-                      {session.mood}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-sm">
+                        {session.mood}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => deleteSession(session.id)}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
