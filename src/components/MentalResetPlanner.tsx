@@ -98,10 +98,23 @@ const MentalResetPlanner = () => {
   };
 
   const handleActivityChange = (activity: keyof ResetActivities) => {
-    setActivities(prev => ({
-      ...prev,
-      [activity]: !prev[activity],
-    }));
+    const currentCount = getSelectedActivitiesCount();
+    const isCurrentlySelected = activities[activity];
+    
+    // Allow unchecking or if less than 3 are selected
+    if (isCurrentlySelected || currentCount < 3) {
+      setActivities(prev => ({
+        ...prev,
+        [activity]: !prev[activity],
+      }));
+    } else {
+      // Show toast when trying to select more than 3
+      toast({
+        title: "Maximum Activities Reached",
+        description: "You can only select up to 3 reset activities.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getSelectedActivitiesCount = () => {
