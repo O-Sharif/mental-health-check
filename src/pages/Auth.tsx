@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,48 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Handle email verification callback
+    const handleAuthCallback = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          toast({
+            title: "Authentication Error",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data.session) {
+          toast({
+            title: "Email Verified!",
+            description: "Welcome to Mental Reset Planner.",
+          });
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Auth callback error:", error);
+      }
+    };
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          navigate("/");
+        }
+      }
+    );
+
+    // Check for auth callback
+    handleAuthCallback();
+
+    return () => subscription.unsubscribe();
+  }, [navigate, toast]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
